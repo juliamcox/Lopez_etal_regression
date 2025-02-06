@@ -77,8 +77,6 @@ for nr = 1:numel(params.regions)
             save(fullfile(saveLoc,params.regions{nr},IDs{na},sprintf('DAFluor_day%s.mat',num2str(days(nf)))),'data');
 
             % Extract timestamps
-
-
             for ne = 1:numel(params.eventNames_all)
                 flist = dir(fullfile(fbasename,params.regions{nr},params.eventNames_all{ne},sprintf('Day%s',num2str(days(nf)))));
                 flist = string({flist(:).name});
@@ -104,6 +102,28 @@ for nr = 1:numel(params.regions)
                 catch
                     keyboard
                 end
+            end
+
+            % Load speed data 
+            try
+                load(fullfile(fbasename,'Movement_DataAnalysis',params.regions{nr},sprintf('%s_DataTable.mat',floc)));
+                % compare timestamps for all events 
+                for ne = 1:numel(params.eventNames_all)
+                    thisTS_orig = behavEvents.TS{behavEvents.Day==days(nf)&behavEvents.EventName==params.eventNames_all(ne)};
+                    thisTS_track= dataTable.Time((eval(sprintf('dataTable.%s',params.eventNames_all{ne}))==1));
+                    if numel(thisTS_track) == numel(thisTS_orig)
+                        tsDiff(na,days(nf),ne) = mean(thisTS_orig-thisTS_track);
+                        fprintf(params.eventNames_all{ne})
+                        fprintf(' ')
+                        thisTS_orig-thisTS_track
+                        fprintf('\n')
+                    else
+                        keyboard
+                    end
+
+                end
+            catch
+                keyboard
             end
 
         end

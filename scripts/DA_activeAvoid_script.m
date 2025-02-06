@@ -4,15 +4,15 @@
 
 %% Set parameters
 %%% Basis sets, fit by day, concatenated by animal, no regularization or cross validation, a few shuffles for testing 
-model       = 'model2';
+model       = 'model3';
 params              = setUpParams(model);
 params.numShuff     = 5000; 
 params.MEFlag       = false; 
 params.regFlag      = 2;
 
 plotFlag    = true; % plot?
-fitFlag     = false; % fit model? 
-extractData = false; % reorganize data? 
+fitFlag     = true; % fit model? 
+extractData = true; % reorganize data? 
 parFlag     = false; % use parfor for bootstrapping model2?
 
 %% Set parameters
