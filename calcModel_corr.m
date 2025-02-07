@@ -1,4 +1,4 @@
-function modelStats = calcModel_corr(X,Y,fits,numFun, modelStats, eventNames,regFlag,MEFlag,aIDs)
+function modelStats = calcModel_corr(X,Y,fits,numFun, modelStats, eventNames,regFlag,MEFlag,aIDs,speedFlag)
 
 
 
@@ -40,6 +40,22 @@ for ne = 1:numel(eventNames)
     counter = counter+numFun(ne);
 end
 
+if speedFlag
+    for ne = counter:size(X,2)
+        % Exclude predictors for this event
+        thisX = X;
+        thisX(:,counter) = [];
+        thisB = eval(sprintf('fits.betas.speed%s;',num2str(counter-size(X,2))));
+        if MEFlag
+            thisRE = eval(sprintf('fits.randomEffects.speed%s;',num2str(counter-size(X,2))));
+            yhat = thisX*thisB + Z*thisRE;
+        else
+            yhat  = thisX*thisB; % estimated data
+        end
+        eval(sprintf('modelStats.corr.speed%s = corr(yhat,Y);',num2str(counter-size(X,2))));
+    end
+end
+
 % Calculate correlation coefficient for the reduced models without refitting 
 if regFlag == 0
     counter = 2;
@@ -61,5 +77,22 @@ for ne = 1:numel(eventNames)
     end
     eval(sprintf('modelStats.corr_noRefit.%s = corr(yhat,Y);',eventNames{ne}));
     counter = counter+numFun(ne);
+end
+
+if speedFlag
+    for ne = counter:size(X,2)
+        % Exclude predictors for this event
+        thisX = X;
+        thisX(:,counter) = [];
+        thisB = fits.betas.full;
+        thisB(counter) = [];
+        if MEFlag
+            thisRE = fits.randomEffects.full;
+            yhat = thisX*thisB + Z*thisRE;
+        else
+            yhat  = thisX*thisB; % estimated data
+        end
+        eval(sprintf('modelStats.corr_noRefit.speed%s = corr(yhat,Y);',num2str(counter-size(X,2))));
+    end
 end
 

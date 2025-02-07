@@ -390,7 +390,7 @@ switch params.model
                     end
 
                     %%% Fit full and reduced models to real data.  If fitting without regularization, calculate F statistic for comparison between full and all reduced models (reduced models exclude all predictors associated w/ a particular event)
-                    [fits_real{1,ns},modelStats_real{1,ns},errFlag] = fitModel_activeAvoid(X,Y,params.eventNames,numFun,params.regFlag,aID,params.MEFlag,lam);
+                    [fits_real{1,ns},modelStats_real{1,ns},errFlag] = fitModel_activeAvoid(X,Y,params.eventNames,numFun,params.regFlag,aID,params.MEFlag,lam,params.speedFlag);
 
                     if errFlag
                         % If fitting throws a warning, exclude fit (everything to NaN)
@@ -400,9 +400,9 @@ switch params.model
                         % Calculate correlation coefficient between real and estimated data for full and reduced models
                         if params.regFlag == 0
                             thisX = cat(2,ones(size(X,1),1),nanzscore(X,1)); % add column of ones to predictor matrix (intercept)
-                            modelStats_real{1,ns} = calcModel_corr(thisX,nanzscore(Y,1),fits_real{1,ns},numFun, modelStats_real{1,ns},params.eventNames,params.regFlag,params.MEFlag,aID);
+                            modelStats_real{1,ns} = calcModel_corr(thisX,nanzscore(Y,1),fits_real{1,ns},numFun, modelStats_real{1,ns},params.eventNames,params.regFlag,params.MEFlag,aID,params.speedFlag);
                         else
-                            modelStats_real{1,ns} = calcModel_corr(nanzscore(X,1),nanzscore(Y,1),fits_real{1,ns},numFun, modelStats_real{1,ns},params.eventNames,params.regFlag,params.MEFlag,aID);
+                            modelStats_real{1,ns} = calcModel_corr(nanzscore(X,1),nanzscore(Y,1),fits_real{1,ns},numFun, modelStats_real{1,ns},params.eventNames,params.regFlag,params.MEFlag,aID,params.speedFlag);
                         end
                     end
 
@@ -420,13 +420,13 @@ switch params.model
                                 X_shuff = cell2mat(arrayfun(@(x) X(trialIndicator==x,:), thisTrials,'UniformOutput',false));
                                 aID_shuff= cell2mat(arrayfun(@(x) aID(trialIndicator==x),thisTrials,'UniformOutput',false));
                                 fprintf('.')
-                                [tempFits_shuff{nss},tempStats_shuff{nss},shuffErr]  = fitModel_activeAvoid(X_shuff,Y_shuff,params.eventNames,numFun,params.regFlag,aID_shuff,params.MEFlag,lam);
+                                [tempFits_shuff{nss},tempStats_shuff{nss},shuffErr]  = fitModel_activeAvoid(X_shuff,Y_shuff,params.eventNames,numFun,params.regFlag,aID_shuff,params.MEFlag,lam,params.speedFlag);
                                 if ~shuffErr
                                     if params.regFlag == 0
                                         thisX = cat(2,ones(size(X_shuff,1),1),nanzscore(X_shuff,1));
-                                        tempStats_shuff{nss} = calcModel_corr(thisX,nanzscore(Y_shuff,1),tempFits_shuff{nss},numFun, tempStats_shuff{nss},params.eventNames,params.regFlag,params.MEFlag,aID_shuff);
+                                        tempStats_shuff{nss} = calcModel_corr(thisX,nanzscore(Y_shuff,1),tempFits_shuff{nss},numFun, tempStats_shuff{nss},params.eventNames,params.regFlag,params.MEFlag,aID_shuff,params.speedFlag);
                                     else
-                                        tempStats_shuff{nss} = calcModel_corr(nanzscore(X_shuff,1),nanzscore(Y_shuff,1),tempFits_shuff{nss},numFun, tempStats_shuff{nss},params.eventNames,params.regFlag,params.MEFlag,aID_shuff);
+                                        tempStats_shuff{nss} = calcModel_corr(nanzscore(X_shuff,1),nanzscore(Y_shuff,1),tempFits_shuff{nss},numFun, tempStats_shuff{nss},params.eventNames,params.regFlag,params.MEFlag,aID_shuff,params.speedFlag);
                                     end
                                 else
                                     tempStats_shuff{nss}.corr.full = NaN;
@@ -444,14 +444,14 @@ switch params.model
                                 X_shuff  = cell2mat(arrayfun(@(x) X(trialIndicator==x,:), thisTrials,'UniformOutput',false));
                                 aID_shuff= cell2mat(arrayfun(@(x) aID(trialIndicator==x),thisTrials,'UniformOutput',false));
                                 fprintf('.')
-                                [fits_shuff{1,ns}{nss},modelStats_shuff{1,ns}{nss},shuffErr]  = fitModel_activeAvoid(X_shuff,Y_shuff,params.eventNames,numFun,params.regFlag,aID_shuff,params.MEFlag,lam);
+                                [fits_shuff{1,ns}{nss},modelStats_shuff{1,ns}{nss},shuffErr]  = fitModel_activeAvoid(X_shuff,Y_shuff,params.eventNames,numFun,params.regFlag,aID_shuff,params.MEFlag,lam,params.speedFlag);
                                 if ~shuffErr
                                     if params.regFlag == 0
                                         thisX = cat(2,ones(size(X_shuff,1),1),nanzscore(X_shuff,1));
-                                        modelStats_shuff{1,ns}{nss} = calcModel_corr(thisX,nanzscore(Y_shuff,1),fits_shuff{1,ns}{nss},numFun, modelStats_shuff{1,ns}{nss},params.eventNames,params.regFlag,params.MEFlag,aID_shuff);
+                                        modelStats_shuff{1,ns}{nss} = calcModel_corr(thisX,nanzscore(Y_shuff,1),fits_shuff{1,ns}{nss},numFun, modelStats_shuff{1,ns}{nss},params.eventNames,params.regFlag,params.MEFlag,aID_shuff,params.speedFlag);
                                     else
                                         thisX = nanzscore(X_shuff,1);
-                                        modelStats_shuff{1,ns}{nss} = calcModel_corr(thisX,nanzscore(Y_shuff,1),fits_shuff{1,ns}{nss},numFun, modelStats_shuff{1,ns}{nss},params.eventNames,params.regFlag,params.MEFlag,aID_shuff);
+                                        modelStats_shuff{1,ns}{nss} = calcModel_corr(thisX,nanzscore(Y_shuff,1),fits_shuff{1,ns}{nss},numFun, modelStats_shuff{1,ns}{nss},params.eventNames,params.regFlag,params.MEFlag,aID_shuff,params.speedFlag);
                                     end
                                 else
                                     modelStats_shuff{1,ns}{nss}.corr.full = NaN;
@@ -536,12 +536,12 @@ if regFlag == 1
     for nf = 1:cv.NumTestSets
         thisTrain = find(training(cv,nf));
         thisTest  = find(test(cv,nf));
-        thisY = zscore(Y(sum(trialIndicator==thisTrain',2)==1),[],1);
-        thisX = zscore(X(sum(trialIndicator==thisTrain',2)==1,:),[],1);
+        thisY = nanzscore(Y(sum(trialIndicator==thisTrain',2)==1),1);
+        thisX = nanzscore(X(sum(trialIndicator==thisTrain',2)==1,:),1);
         B = ridge(thisY,thisX,lambdas);
         for nb = 1:size(B,2)
-            yhat = zscore(X(sum(trialIndicator==thisTest',2)==1,:),[],1)*B(:,nb); % estimated data
-            testY = zscore(Y(sum(trialIndicator==thisTest',2)==1,:),[],1);
+            yhat = nanzscore(X(sum(trialIndicator==thisTest',2)==1,:),1)*B(:,nb); % estimated data
+            testY = nanzscore(Y(sum(trialIndicator==thisTest',2)==1,:),1);
             lamMSE(nb,nf) = mean(sum((testY-yhat).^2));
         end
         [~,lam(nf)] = min(lamMSE(:,nf));
@@ -562,12 +562,12 @@ elseif regFlag == 2
     for nf = 1:cv.NumTestSets
         thisTrain = find(training(cv,nf));
         thisTest  = find(test(cv,nf));
-        thisY = zscore(Y(sum(trialIndicator==thisTrain',2)==1),[],1);
-        thisX = zscore(X(sum(trialIndicator==thisTrain',2)==1,:),[],1);
+        thisY = nanzscore(Y(sum(trialIndicator==thisTrain',2)==1),1);
+        thisX = nanzscore(X(sum(trialIndicator==thisTrain',2)==1,:),1);
         [B,etc] = lasso(thisX,thisY,'NumLambda',1000);
         for nb = 1:size(B,2)
-            yhat = zscore(X(sum(trialIndicator==thisTest',2)==1,:),[],1)*B(:,nb); % estimated data
-            testY = zscore(Y(sum(trialIndicator==thisTest',2)==1,:),[],1);
+            yhat = nanzscore(X(sum(trialIndicator==thisTest',2)==1,:),1)*B(:,nb); % estimated data
+            testY = nanzscore(Y(sum(trialIndicator==thisTest',2)==1,:),1);
             lamMSE(nb,nf) = mean(sum((testY-yhat).^2));
             allLam(nb,nf) = etc.Lambda(nb);
         end
