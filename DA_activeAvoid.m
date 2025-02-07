@@ -13,7 +13,7 @@ rng('shuffle'); % set random number generator seed based on current time
 % Find animal IDs
 recs = readtable(fullfile(params.fbasename,'Photometry_Identification.xlsx')); % Load list of recordings
 recs.Properties.VariableNames = {'ID';'Fname';'Day';'Region'};
-Fnames = recs.Fname;
+Fnames = erase(recs.Fname,'''');
 Fnames = cellfun(@(x) x(2:end-1), Fnames, 'UniformOutput', false);
 recs.Fname = string(Fnames);
 
@@ -322,16 +322,187 @@ switch params.model
                     counter = counter+numFun(ne);
                 end
             end
-        
-        % Save data for each region
-        saveName = fullfile(params.fbasename,'plots',params.regions{nr},sprintf('%s_numShuff%s_Fs%s_ME%s_reg%s.mat',params.model,num2str(params.numShuff),num2str(params.newFs),num2str(params.MEFlag),num2str(params.regFlag)));
-        save(saveName,'fits_real','fits_shuff','modelStats_real','modelStats_shuff','params','params');
 
-        clear fits_real fits_shuff modelStats_real modelStats_shuff
+            % Save data for each region
+            saveName = fullfile(params.fbasename,'plots',params.regions{nr},sprintf('%s_numShuff%s_Fs%s_ME%s_reg%s.mat',params.model,num2str(params.numShuff),num2str(params.newFs),num2str(params.MEFlag),num2str(params.regFlag)));
+            save(saveName,'fits_real','fits_shuff','modelStats_real','modelStats_shuff','params','params');
+
+            clear fits_real fits_shuff modelStats_real modelStats_shuff
         end
         % Save kernels and average fluorescence traces
         saveName = fullfile(params.fbasename,'plots',sprintf('%s_kernels_numShuff%s_Fs%s_ME%s_reg%s.mat',params.model,num2str(params.numShuff),num2str(params.newFs),num2str(params.MEFlag),num2str(params.regFlag)));
         save(saveName,"meanFluor","temporalKernels","shuffKernels","params");
+
+    %% Model 3: Fit regression by session, concatenating across animals (option for mixed effects if regFlag == 0), includes speed predictor
+
+    case "model3"
+
+        for nr = 1:numel(params.regions)
+            thisIDs = unique(recs.ID(contains(recs.Region,params.regions{nr})));
+            thisIDs(contains(thisIDs,excl.Var1)) = [];
+            for ns = params.sessIDs
+                lastwarn(''); % reset warning indicator
+                %%% Initialize predictor matrix and response vector for original and shuffled data and animal and trial indicators for concatenating
+                X = [];
+                Y = [];
+                aID = [];
+                trialIndicator = [];
+
+                counter = 0; % trial counter for cross validation
+                for na = 1:numel(thisIDs)
+                    %%% Concatenate predictor matrix, response variable, trial indicator, animal indicator across animals
+                    dataLoc = fullfile(params.fbasename,'SpeedData',params.regions{nr},thisIDs{na});
+                    try % Catch statement for 310-907 who doesn't have data on session 4
+                        %%% Create predictor matrix and response vector and concatenate
+                        [thisX,thisY,thisTrialIndicator,numFun,basisSets,thisFluor,allFluor] = createPredictorMatrix_activeAvoid(params,params.eventNames,params.timeBack,params.timeForward,ns,dataLoc,0,params.speedFlag);
+                        X                  = cat(1,X,thisX);
+                        Y                  = cat(1,Y,thisY);
+                        aID                = cat(1,aID,ones(size(thisY)).*na);
+                        trialIndicator = cat(1,trialIndicator,thisTrialIndicator+counter);
+                        counter        = counter+max(thisTrialIndicator);
+                        %%% Extract avg fluorescence for each event
+                        for ne = 1:numel(params.eventNames)
+                            eval(sprintf('meanFluor.%s.%s(na,:,ns) = thisFluor{ne};',params.regions{nr},params.eventNames{ne}));
+                        end
+                    catch % 310-907 no day 4 data
+                        if (ns ~=4 && ~contains(thisIDs(na),'310-907')) && (ns ~= 3 && params.regions{nr}~="vmShell") && (ns ~= 1 && params.regions{nr}~="Core")
+                            keyboard
+                        end
+                    end
+                end
+
+                if isempty(X)
+                    fits_real{1,ns}.betas.full = NaN;
+                    modelStats_real{1,ns}.corr.full = NaN;
+                    modelStats_real{1,ns}.corr_noRefit.full = NaN;
+                    fits_shuff{1,ns}{1} = NaN;
+                    modelStats_shuff{1,ns}{1} = NaN;
+                else
+
+                    fprintf('Fitting %s day %s\n', params.regions{nr},  num2str(ns));
+
+                    %%% If using regularization, find lambda
+                    if params.regFlag > 0
+                        fprintf('Finding lambda value \n')
+                        lam=calcLambda(params.regFlag,X,Y,aID,trialIndicator);
+                    else
+                        lam = NaN;
+                    end
+
+                    %%% Fit full and reduced models to real data.  If fitting without regularization, calculate F statistic for comparison between full and all reduced models (reduced models exclude all predictors associated w/ a particular event)
+                    [fits_real{1,ns},modelStats_real{1,ns},errFlag] = fitModel_activeAvoid(X,Y,params.eventNames,numFun,params.regFlag,aID,params.MEFlag,lam);
+
+                    if errFlag
+                        % If fitting throws a warning, exclude fit (everything to NaN)
+                        modelStats_real{1,ns}.corr.full = NaN;
+                        modelStats_real{1,ns}.corr_noRefit.full = NaN;
+                    else
+                        % Calculate correlation coefficient between real and estimated data for full and reduced models
+                        if params.regFlag == 0
+                            thisX = cat(2,ones(size(X,1),1),nanzscore(X,1)); % add column of ones to predictor matrix (intercept)
+                            modelStats_real{1,ns} = calcModel_corr(thisX,nanzscore(Y,1),fits_real{1,ns},numFun, modelStats_real{1,ns},params.eventNames,params.regFlag,params.MEFlag,aID);
+                        else
+                            modelStats_real{1,ns} = calcModel_corr(nanzscore(X,1),nanzscore(Y,1),fits_real{1,ns},numFun, modelStats_real{1,ns},params.eventNames,params.regFlag,params.MEFlag,aID);
+                        end
+                    end
+
+                    %%% Bootstrap fits to generate confidence intervals
+                    trials = unique(trialIndicator);
+                    if params.numShuff > 0
+                        %%% Fit resampled data
+                        fprintf('Bootstrapping');
+                        if parFlag
+
+                            parfor nss = 1:params.numShuff
+                                %%% Generate resampled response vectors and predictor matrix
+                                thisTrials = datasample(trials,numel(trials),1,"Replace",true); % resample trials with replacement
+                                Y_shuff = cell2mat(arrayfun(@(x) Y(trialIndicator==x), thisTrials,'UniformOutput',false));
+                                X_shuff = cell2mat(arrayfun(@(x) X(trialIndicator==x,:), thisTrials,'UniformOutput',false));
+                                aID_shuff= cell2mat(arrayfun(@(x) aID(trialIndicator==x),thisTrials,'UniformOutput',false));
+                                fprintf('.')
+                                [tempFits_shuff{nss},tempStats_shuff{nss},shuffErr]  = fitModel_activeAvoid(X_shuff,Y_shuff,params.eventNames,numFun,params.regFlag,aID_shuff,params.MEFlag,lam);
+                                if ~shuffErr
+                                    if params.regFlag == 0
+                                        thisX = cat(2,ones(size(X_shuff,1),1),nanzscore(X_shuff,1));
+                                        tempStats_shuff{nss} = calcModel_corr(thisX,nanzscore(Y_shuff,1),tempFits_shuff{nss},numFun, tempStats_shuff{nss},params.eventNames,params.regFlag,params.MEFlag,aID_shuff);
+                                    else
+                                        tempStats_shuff{nss} = calcModel_corr(nanzscore(X_shuff,1),nanzscore(Y_shuff,1),tempFits_shuff{nss},numFun, tempStats_shuff{nss},params.eventNames,params.regFlag,params.MEFlag,aID_shuff);
+                                    end
+                                else
+                                    tempStats_shuff{nss}.corr.full = NaN;
+                                end
+                            end
+                            fits_shuff{1,ns} = tempFits_shuff;
+                            modelStats_shuff{1,ns} = tempStats_shuff;
+                            fprintf('\n')
+
+                        else
+                            for nss = 1:params.numShuff
+                                %%% Generate resampled response vectors and predictor matrix
+                                thisTrials = datasample(trials,numel(trials),1,"Replace",true); % resample trials with replacement
+                                Y_shuff  = cell2mat(arrayfun(@(x) Y(trialIndicator==x), thisTrials,'UniformOutput',false));
+                                X_shuff  = cell2mat(arrayfun(@(x) X(trialIndicator==x,:), thisTrials,'UniformOutput',false));
+                                aID_shuff= cell2mat(arrayfun(@(x) aID(trialIndicator==x),thisTrials,'UniformOutput',false));
+                                fprintf('.')
+                                [fits_shuff{1,ns}{nss},modelStats_shuff{1,ns}{nss},shuffErr]  = fitModel_activeAvoid(X_shuff,Y_shuff,params.eventNames,numFun,params.regFlag,aID_shuff,params.MEFlag,lam);
+                                if ~shuffErr
+                                    if params.regFlag == 0
+                                        thisX = cat(2,ones(size(X_shuff,1),1),nanzscore(X_shuff,1));
+                                        modelStats_shuff{1,ns}{nss} = calcModel_corr(thisX,nanzscore(Y_shuff,1),fits_shuff{1,ns}{nss},numFun, modelStats_shuff{1,ns}{nss},params.eventNames,params.regFlag,params.MEFlag,aID_shuff);
+                                    else
+                                        thisX = nanzscore(X_shuff,1);
+                                        modelStats_shuff{1,ns}{nss} = calcModel_corr(thisX,nanzscore(Y_shuff,1),fits_shuff{1,ns}{nss},numFun, modelStats_shuff{1,ns}{nss},params.eventNames,params.regFlag,params.MEFlag,aID_shuff);
+                                    end
+                                else
+                                    modelStats_shuff{1,ns}{nss}.corr.full = NaN;
+                                end
+                            end
+                            fprintf('\n')
+                        end
+                    else
+                        fits_shuff{1,ns}{1} = NaN;
+                        modelStats_shuff{1,ns}{1} = NaN;
+                    end
+                end
+
+
+                %%% Organize data for plotting
+                % Extract temporal kernels
+                if params.regFlag == 0
+                    counter = 2;
+                else
+                    counter = 1;
+                end
+                for ne = 1:numel(params.eventNames)
+                    if ~isnan(fits_real{1,ns}.betas.full)
+                        clear thisKernel
+                        thiscoeffs = fits_real{1,ns}.betas.full(counter:counter+numFun(ne)-1);
+                        thisKernel = zscore(full(basisSets{ne}))*thiscoeffs;
+                        eval(sprintf('temporalKernels.%s.%s(1,:,ns) = thisKernel'';',params.regions{nr},params.eventNames{ne}));
+                        if params.numShuff > 0
+                            for nss = 1:params.numShuff
+                                thiscoeffs = fits_shuff{1,ns}{nss}.betas.full(counter:counter+numFun(ne)-1);
+                                thisKernel = zscore(full(basisSets{ne}))*thiscoeffs;
+                                eval(sprintf('shuffKernels.%s.%s(nss,:,ns) = thisKernel'';',params.regions{nr},params.eventNames{ne}));
+                            end
+                        end
+                    else
+                        eval(sprintf('temporalKernels.%s.%s(1,:,ns) = nan.*zscore(full(basisSets{ne}))*ones(numel(counter:counter+numFun(ne)-1),1);',params.regions{nr},params.eventNames{ne}));
+                    end
+                    counter = counter+numFun(ne);
+                end
+            end
+
+            % Save data for each region
+            saveName = fullfile(params.fbasename,'plots',params.regions{nr},sprintf('%s_numShuff%s_Fs%s_ME%s_reg%s.mat',params.model,num2str(params.numShuff),num2str(params.newFs),num2str(params.MEFlag),num2str(params.regFlag)));
+            save(saveName,'fits_real','fits_shuff','modelStats_real','modelStats_shuff','params','params');
+
+            clear fits_real fits_shuff modelStats_real modelStats_shuff
+        end
+        % Save kernels and average fluorescence traces
+        saveName = fullfile(params.fbasename,'plots',sprintf('%s_kernels_numShuff%s_Fs%s_ME%s_reg%s.mat',params.model,num2str(params.numShuff),num2str(params.newFs),num2str(params.MEFlag),num2str(params.regFlag)));
+        save(saveName,"meanFluor","temporalKernels","shuffKernels","params");
+
 end
 end
 

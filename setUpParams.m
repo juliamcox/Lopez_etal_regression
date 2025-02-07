@@ -27,23 +27,21 @@ switch model
         params.timeBack     = [2;       2;          .5;        1;            0]; % time before the event in seconds
         params.timeForward  = [1.5;       1.5;        1.5;        5;            5]; % time after the event in seconds
         params.sessIDs      = 1:7; % which sessions to fit
+        params.speedFlag    = false;
     case 'model2' % fit by session; concatenate all mice
         % Fit parameters
         params.eventNames   = {'CueAvoid';'CueEscape';'Shock';'AvoidCross';'EscapeCross'}; % which events to include
         params.timeBack     = [2;       2;          .5;        1;            0]; % time before the event in seconds
         params.timeForward  = [1.5;      1.5;        1.5;        5;            5]; % time after the event in seconds
         params.sessIDs      = 1:7; % which sessions to fit
-    case 'model3' % include speed 
+        params.speedFlag    = false;
+    case 'model3' % includes speed 
         % Fit parameters 
-        params.eventNames   = {'CueAvoid';'CueEscape';'Shock';'AvoidCross';'EscapeCross'}; % which events to include
-        params.timeBack     = [2;       2;          .5;        1;            0]; % time before the event in seconds
-        params.timeForward  = [1.5;      1.5;        1.5;        5;            5]; % time after the event in seconds
+        params.eventNames   = {'CueAvoid';'CueEscape';'Shock';'AvoidCross';'EscapeCross';'ITICross'}; % which events to include
+        params.timeBack     = [2;       2;          .5;        1;            0;           2]; % time before the event in seconds
+        params.timeForward  = [1.5;      1.5;        1.5;        5;          5;           5]; % time after the event in seconds
         params.sessIDs      = 1:7; % which sessions to fit
-        if ispc
-            params.fbasename_raw = 'C:\Users\jmc0163\OneDrive - Northwestern University\GLopez_DataforRegressionAnalysis\Movement_DataAnalysis';
-        elseif ismac
-            params.fbasename_raw = '/Users/julia/Library/CloudStorage/OneDrive-NorthwesternUniversity/GLopez_DataforRegressionAnalysis/Movement_DataAnalysis';
-        end
+        params.speedFlag    = true; % include speed predictor 
 end
 
 params.numBasis     = 7; % number of functions per second for basis set

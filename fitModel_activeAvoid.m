@@ -152,7 +152,11 @@ else
 %% Lasso regularization 
     elseif regFlag == 2 
          % fit the full model
+         try
          fits.betas.full = lasso(zscore(X,[],1),zscore(Y,[],1),'Lambda',lam);
+         catch
+             keyboard
+         end
          if ~isempty(lastwarn)
              keyboard
          end
