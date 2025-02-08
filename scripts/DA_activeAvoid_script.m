@@ -33,7 +33,7 @@
 %%% Basis sets for events, continuous speed variable, fit by day, concatenated by animal, lasso regularization 
 model       = 'model3';
 params              = setUpParams(model);
-params.numShuff     = 50; 
+params.numShuff     = 5000; 
 params.MEFlag       = false; 
 params.regFlag      = 2;
 
