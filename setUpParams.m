@@ -56,7 +56,7 @@ params.numShuff = 0; %number of resamples for bootstrapping
 % Data parameters
 params.newFs          = 20; % frequency to downsample to
 params.Fs             = round(1017.25); % acquisition rate
-params.eventNames_all = {'Shock';'EscapeCross';'AvoidCross';'CueEscape';'CueAvoid'}; % all events
+params.eventNames_all = {'Shock';'EscapeCross';'AvoidCross';'CueEscape';'CueAvoid';'ITICross'}; % all events
 params.regions        = {'vmShell';'Core'}; % brain regions
 params.numBasis       = params.numBasis;
 
