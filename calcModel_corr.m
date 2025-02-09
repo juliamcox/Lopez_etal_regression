@@ -52,7 +52,7 @@ if speedFlag
         else
             yhat  = thisX*thisB; % estimated data
         end
-        eval(sprintf('modelStats.corr.speed%s = corr(yhat,Y,,''rows'',''complete'');',num2str(counter-size(X,2))));
+        eval(sprintf('modelStats.corr.speed%s = corr(yhat,Y,''rows'',''complete'');',num2str(counter-size(X,2))));
     end
 end
 
@@ -75,7 +75,7 @@ for ne = 1:numel(eventNames)
     else
         yhat  = thisX*thisB; % estimated data
     end
-    eval(sprintf('modelStats.corr_noRefit.%s = corr(yhat,Y);',eventNames{ne}));
+    eval(sprintf('modelStats.corr_noRefit.%s = corr(yhat,Y,''rows'',''complete'');',eventNames{ne}));
     counter = counter+numFun(ne);
 end
 
@@ -92,7 +92,7 @@ if speedFlag
         else
             yhat  = thisX*thisB; % estimated data
         end
-        eval(sprintf('modelStats.corr_noRefit.speed%s = corr(yhat,Y);',num2str(counter-size(X,2))));
+        eval(sprintf('modelStats.corr_noRefit.speed%s = corr(yhat,Y,''rows'',''complete'');',num2str(counter-size(X,2))));
     end
 end
 
