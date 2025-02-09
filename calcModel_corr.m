@@ -15,7 +15,7 @@ if MEFlag
 else
     yhat = X*fits.betas.full;
 end
-modelStats.corr.full = corr(yhat,Y);
+modelStats.corr.full = corr(yhat,Y,'rows','complete');
 
 
 % Calculate correlation coefficient for the reduced models
@@ -36,7 +36,7 @@ for ne = 1:numel(eventNames)
     else
         yhat  = thisX*thisB; % estimated data
     end
-    eval(sprintf('modelStats.corr.%s = corr(yhat,Y);',eventNames{ne}));
+    eval(sprintf('modelStats.corr.%s = corr(yhat,Y,''rows'',''complete'');',eventNames{ne}));
     counter = counter+numFun(ne);
 end
 
@@ -52,7 +52,7 @@ if speedFlag
         else
             yhat  = thisX*thisB; % estimated data
         end
-        eval(sprintf('modelStats.corr.speed%s = corr(yhat,Y);',num2str(counter-size(X,2))));
+        eval(sprintf('modelStats.corr.speed%s = corr(yhat,Y,,''rows'',''complete'');',num2str(counter-size(X,2))));
     end
 end
 
