@@ -33,12 +33,12 @@
 %%% Basis sets for events, continuous speed variable, fit by day, concatenated by animal, lasso regularization 
 model       = 'model3';
 params              = setUpParams(model);
-params.numShuff     = 50; 
+params.numShuff     = 10; 
 params.MEFlag       = false; 
 params.regFlag      = 2;
 
 plotFlag    = true; % plot?
-fitFlag     = true; % fit model? 
+fitFlag     = false; % fit model? 
 extractData = false; % reorganize data? 
 parFlag     = false; % use parfor for bootstrapping model2?
 

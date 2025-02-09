@@ -18,7 +18,7 @@ end
 
 %% Plot temporal kernels (A-B)
 CIFlag = true;
-sessIDs = [1,3,7]; % which sessions to plot kernels
+sessIDs = [1:7]; % which sessions to plot kernels
 plotKernels(temporalKernels,sessIDs,params.timeBack,params.timeForward,params.eventNames,params,saveLoc,fname,shuffKernels,CIFlag);
 
 %% Plot correlation coefficients for full model and comparison between full and events in eventNames (C-D)

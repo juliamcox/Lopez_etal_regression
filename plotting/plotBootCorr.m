@@ -6,7 +6,7 @@ plotColors = cat(1,[0 0 0;[34 194 227]./255]);
 %% Plot correlation coefficient for the full model 
 
 for nr = 1:numel(params.regions)
-    for ns = 1:numel(params.sessIDs)
+    for ns = params.sessIDs
         mu(nr,ns) = realStats{nr}{ns}.corr.full;
         clear thisShuff
         try
@@ -65,7 +65,7 @@ exportgraphics(f,fullfile(saveLoc,sprintf('%s.pdf',fname)),'Append',true)
 al = .05./(numel(params.sessIDs)*numel(params.regions) + numel(params.regions)*6);
 for ne = 1:numel(eventNames)
     for nr = 1:numel(params.regions)
-        for ns = 1:numel(params.sessIDs)
+        for ns = params.sessIDs
             %mu(nr,ns)  = realStats{nr}{ns}.corr.full-eval(sprintf('realStats{nr}{ns}.corr.%s',eventNames{ne}));
             clear thisShuff
             try
@@ -128,5 +128,62 @@ for ne = 1:numel(eventNames)
     legend(p,params.regions,'Box','off')
     exportgraphics(f,fullfile(saveLoc,sprintf('%s.pdf',fname)),'Append',true)
 
+end
+
+%% Cacluate p value for speed predictor
+if params.speedFlag
+    speedEvents = fieldnames(shuffStats{1}{1}{1}.corr);
+    speedEvents = speedEvents(contains(speedEvents,'speed'));
+    for ne = 1:numel(speedEvents)
+        for nr = 1:numel(params.regions)
+            for ns = params.sessIDs
+                clear thisShuff
+                try
+                    for nss = 1:params.numShuff
+                        thisShuff_full(nss) = shuffStats{nr}{ns}{nss}.corr.full;
+                        thisShuff_reduced(nss)  =  eval(sprintf('shuffStats{nr}{ns}{nss}.corr.%s',speedEvents{ne}));
+                    end
+                    thisShuff = thisShuff_full-thisShuff_reduced;
+                catch
+                    thisShuff = nan(1,params.numShuff);
+                end
+                mu(nr,ns) = median(thisShuff,'omitmissing');
+                shuff{nr,ns} = thisShuff;
+                CI = prctile(thisShuff,[100*al/2,100*(1-al/2)]);
+                H(nr,ns) = CI(1)>0 | CI(2)<0;
+                P(nr,ns) = mean(thisShuff<=0)*2;
+                if CIFlag
+                    errNeg(nr,ns) = prctile(thisShuff,2.5);
+                    errPos(nr,ns) = prctile(thisShuff,97.5);
+                else
+                    errNeg(nr,ns) = std(thisShuff);
+                    errPos(nr,ns) = std(thisShuff);
+                end
+            end
+        end
+    end
+    f=figure('Units','inches','Position',[4.5729 2.8854 2.1357 1.6253]); hold on
+    x = 1:numel(params.sessIDs);
+    for nr = 1:numel(params.regions)
+        if CIFlag
+            plot([x+.1; x+.1], [errNeg(nr,:);errPos(nr,:)],'Color',plotColors(nr,:))
+            y(nr,:) = errPos(nr,:)+.002;
+        else
+            errorbar(x+.1,mu(1,:),errNeg(nr,:),errPos(nr,:),'LineStyle','none','CapSize',0,'Color',plotColors(nr,:))
+            y(nr,:) = mu(nr,:)+errPos(nr,:)+.002;
+        end
+        p(nr)=scatter(x+.1,mu(nr,:),10,'MarkerFaceColor',plotColors(nr,:),'MarkerEdgeColor','none');
+        text(x(H(nr,:))+.1,y(1,H(nr,:)),'*','FontSize',10)
+    end
+    plot([.5 x(end)+.5],[0 0],':','Color',[0 0 0 .5])
+    g=gca;
+    g.XLim = [.5 x(end)+.5];
+    g.XTick = params.sessIDs;
+    g.FontSize = 7.5623;
+    ylabel(sprintf('Correlation coefficient\n(full - reduced)'))
+    xlabel('Day')
+    title(speedEvents{ne}(1:end-1), 'FontSize',8.6426)
+    legend(p,params.regions,'Box','off')
+    exportgraphics(f,fullfile(saveLoc,sprintf('%s.pdf',fname)),'Append',true)
 end
 
