@@ -108,20 +108,20 @@ clear p
 eventNames = cat(1,eventNames,{'ITICross'});
 
 for nr = 1:numel(params.regions)
-    counter = 1; 
+    counter = 1;
     for ns = sessIDs
         p(nr,counter) = nexttile(t,tilenum(t,counter,nr)); hold on
         for ne = find(contains(eventNames,'ITICross'))
             cmap = [0 0 0];
             lstyle = '-';
-           
-            % Extract average kernel and error 
+
+            % Extract average kernel and error
             thisKernel = eval(sprintf('temporalKernels.%s.%s(:,:,ns);',params.regions{nr},eventNames{ne}));
             mu  = mean(thisKernel,1,'omitnan');
             if params.numShuff>0
                 % if bootstrapping, error as standard deviation or 95% confidence interval of the iterations
                 thisKernel = eval(sprintf('shuffKernels.%s.%s(:,:,ns);',params.regions{nr},eventNames{ne}));
-                if CIFlag 
+                if CIFlag
                     errNeg = prctile(thisKernel,2.5,1);
                     errPos = prctile(thisKernel,97.5,1);
                 else
@@ -131,7 +131,7 @@ for nr = 1:numel(params.regions)
                 err = nansem(thisKernel,1);
             end
             x = linspace(-timeBack(ne),timeForward(ne),size(thisKernel,2));
-            
+
             plot(x,mu,'Color',cmap,'LineWidth',1.5,'LineStyle',lstyle);
             if CIFlag
                 patch([x flip(x)],[errNeg flip(errPos)],cmap,'FaceAlpha',.1,'EdgeColor','none')
@@ -163,5 +163,7 @@ for nr = 1:size(p,1)
         plot(p(nr,ns),[0 0], [plotMin plotMax],'--k');
     end
 end
+exportgraphics(f,fullfile(saveLoc,sprintf('%s.pdf',fname)),'Append',true)
+
 end
 

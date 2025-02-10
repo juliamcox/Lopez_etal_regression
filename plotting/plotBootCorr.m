@@ -40,14 +40,16 @@ end
 f=figure('Units','inches','Position',[4.5729 2.8854 1.9427 1.6253]); hold on
 plot(x,y_hat,'k')
 for nr = 1:numel(params.regions)
-    p(nr)=scatter(x,mu(nr,:),10,'MarkerFaceColor',plotColors(nr,:),'MarkerEdgeColor','none');
+
     if CIFlag
-        for nr = 1:numel(params.regions)
-            plot([x; x], [errNeg(nr,:);errPos(nr,:)],'k')
-        end
+        plot([x; x], [errNeg(nr,:);errPos(nr,:)],'k')
+
     else
         errorbar(x,mu(nr,:),errNeg(nr,:),errPos(nr,:),'LineStyle','none','CapSize',0,'Color',plotColors(nr,:))
     end
+
+    p(nr)=scatter(x,mu(nr,:),10,'MarkerFaceColor',plotColors(nr,:),'MarkerEdgeColor','none');
+
 end
 g=gca;
 g.YLim(1)=0;
