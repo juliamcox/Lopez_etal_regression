@@ -45,14 +45,14 @@ if speedFlag
         % Exclude predictors for this event
         thisX = X;
         thisX(:,counter) = [];
-        thisB = eval(sprintf('fits.betas.speed%s;',num2str(counter-size(X,2))));
+        thisB = eval(sprintf('fits.betas.speed%s;',num2str(size(X,2)-counter)));
         if MEFlag
-            thisRE = eval(sprintf('fits.randomEffects.speed%s;',num2str(counter-size(X,2))));
+            thisRE = eval(sprintf('fits.randomEffects.speed%s;',num2str(size(X,2)-counter)));
             yhat = thisX*thisB + Z*thisRE;
         else
             yhat  = thisX*thisB; % estimated data
         end
-        eval(sprintf('modelStats.corr.speed%s = corr(yhat,Y,''rows'',''complete'');',num2str(counter-size(X,2))));
+        eval(sprintf('modelStats.corr.speed%s = corr(yhat,Y,''rows'',''complete'');',num2str(size(X,2)-counter)));
     end
 end
 
@@ -92,7 +92,8 @@ if speedFlag
         else
             yhat  = thisX*thisB; % estimated data
         end
-        eval(sprintf('modelStats.corr_noRefit.speed%s = corr(yhat,Y,''rows'',''complete'');',num2str(counter-size(X,2))));
+        eval(sprintf('modelStats.corr_noRefit.speed%s = corr(yhat,Y,''rows'',''complete'');',num2str(size(X,2)-counter)));
+        counter = counter+1;
     end
 end
 

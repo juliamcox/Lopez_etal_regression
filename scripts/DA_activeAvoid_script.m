@@ -31,9 +31,37 @@
 
 %% Set parameters
 %%% Basis sets for events, continuous speed variable, fit by day, concatenated by animal, lasso regularization 
-model       = 'model3';
+% model       = 'model3';
+% params              = setUpParams(model);
+% params.numShuff     = 5000; 
+% params.MEFlag       = false; 
+% params.regFlag      = 2;
+% 
+% plotFlag    = true; % plot?
+% fitFlag     = false; % fit model? 
+% extractData = false; % reorganize data? 
+% parFlag     = true; % use parfor for bootstrapping model2?
+
+%% Set parameters
+%%% Basis sets for events, continuous speed and acceleration variables, fit by day, concatenated by animal, lasso regularization 
+% model       = 'model4';
+% params              = setUpParams(model);
+% params.numShuff     = 20; 
+% params.MEFlag       = false; 
+% params.regFlag      = 2;
+% 
+% plotFlag    = true; % plot?
+% fitFlag     = true; % fit model? 
+% extractData = false; % reorganize data? 
+% parFlag     = true; % use parfor for bootstrapping model2?
+
+%% Set parameters
+%%% Basis sets for events, continuous speed and acceleration variables, fit
+%%% by day, concatenated by animal, lasso regularization; all data points
+%%% (not just during events)
+model       = 'model5';
 params              = setUpParams(model);
-params.numShuff     = 5000; 
+params.numShuff     = 50; 
 params.MEFlag       = false; 
 params.regFlag      = 2;
 

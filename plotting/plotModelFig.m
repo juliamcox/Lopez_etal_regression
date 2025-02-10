@@ -24,7 +24,7 @@ plotKernels(temporalKernels,sessIDs,params.timeBack,params.timeForward,params.ev
 %% Plot correlation coefficients for full model and comparison between full and events in eventNames (C-D)
 if params.numShuff > 0
     CIFlag = true;
-    stats = plotBootCorr(realStats,shuffStats,params,{'Shock'},CIFlag,saveLoc,fname);
+    stats = plotBootCorr(realStats,shuffStats,params,{'Shock';'ITICross'},CIFlag,saveLoc,fname);
 end
 
 %% Plot area under the curve (E)

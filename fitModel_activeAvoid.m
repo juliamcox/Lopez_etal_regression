@@ -180,7 +180,8 @@ else
                 thisX = X;
                 thisX(:,ne) = [];
                 B   = lasso(nanzscore(thisX,1),nanzscore(Y,1),'Lambda',lam);
-                eval(sprintf('fits.betas.speed%s = B;',num2str(counter-size(X,2))))
+                eval(sprintf('fits.betas.speed%s = B;',num2str(size(X,2)-counter)))
+                counter = counter+1;
              end
 
          end
