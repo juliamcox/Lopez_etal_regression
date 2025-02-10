@@ -61,10 +61,10 @@ switch params.model
                         for nss = 1:params.numShuff
                             [~,Y_shuff{nss},~,~,~,~,~] = createPredictorMatrix_activeAvoid(params,params.eventNames,params.timeBack,params.timeForward,ns,dataLoc,1);
                         end
-                        %%% Fit full and reduced models and to real data and calculate F statistic for compariosn between full and all reduced models(reduced models exclude all predictors associated w/ a particular event)
+                        %%% Fit full and reduced models and to real data and calculate F statistic for comparison between full and all reduced models(reduced models exclude all predictors associated w/ a particular event)
                         if params.regFlag > 0
                             fprintf('Finding lambda value \n')
-                            lam=calcLambda(params.regFlag,X,Y,ones(size(Y)),trialIndicator);
+                            lam=calcLambda(params.regFlag,X,Y,ones(size(Y)),trialIndicator,params);
                         else
                             lam = NaN;
                         end
@@ -214,7 +214,7 @@ switch params.model
                 %%% If using regularization, find lambda
                 if params.regFlag > 0
                     fprintf('Finding lambda value \n')
-                    lam=calcLambda(params.regFlag,X,Y,aID,trialIndicator);
+                    lam=calcLambda(params.regFlag,X,Y,aID,trialIndicator,params);
                 else
                     lam = NaN;
                 end
@@ -335,7 +335,7 @@ switch params.model
 
     %% Model 3: Fit regression by session, concatenating across animals (option for mixed effects if regFlag == 0), includes speed predictor
 
-    case {"model3","model4"} 
+    case {"model3";"model4";"model5"} 
 
         for nr = 1:numel(params.regions)
             thisIDs = unique(recs.ID(contains(recs.Region,params.regions{nr})));
@@ -384,7 +384,7 @@ switch params.model
                     %%% If using regularization, find lambda
                     if params.regFlag > 0
                         fprintf('Finding lambda value \n')
-                        lam=calcLambda(params.regFlag,X,Y,aID,trialIndicator);
+                        lam=calcLambda(params.regFlag,X,Y,aID,trialIndicator,params);
                     else
                         lam = NaN;
                     end
@@ -511,7 +511,7 @@ end
 %% Functions
 
 %% Find best lambda using full data set based on cross-validated correlation between real and estimated data
-function lam = calcLambda(regFlag,X,Y,aID,trialIndicator)
+function lam = calcLambda(regFlag,X,Y,aID,trialIndicator,params)
 
 % Set up partitions for determining lambda
 % Find trials for each animal
@@ -519,16 +519,20 @@ IDs = unique(aID);
 counter = 1;
 trials = [];
 group = [];
-for na = 1:numel(IDs)
-    trainTrials = unique(trialIndicator(aID==IDs(na)));
-    trials = cat(1,trials,trainTrials+counter-1);
-    trialIndicator(aID==IDs(na)) = trialIndicator(aID==IDs(na))+counter-1;
-    group = cat(1,group,ones(size(trainTrials)).*na);
-    counter = counter+max(trainTrials);
+if params.model == "model5" 
+    group = aID;    
+    cv = cvpartition(group,"KFold",5,"Stratify",true); % Create cross-validation partitions with stratification by animal or day (if concatenated)
+    trialIndicator = aID; % cross validation by data point rather than trial 
+else
+    for na = 1:numel(IDs)
+        trainTrials = unique(trialIndicator(aID==IDs(na)));
+        trials = cat(1,trials,trainTrials+counter-1);
+        trialIndicator(aID==IDs(na)) = trialIndicator(aID==IDs(na))+counter-1;
+        group = cat(1,group,ones(size(trainTrials)).*na);
+        counter = counter+max(trainTrials);
+    end
+    cv = cvpartition(group,"KFold",5,"Stratify",true); % Create cross-validation partitions with stratification by animal or day (if concatenated)
 end
-
-cv = cvpartition(group,"KFold",5,"Stratify",true); % Create cross-validation partitions with stratification by animal or day (if concatenated)
-
 if regFlag == 1
     lambdas = 0:100:10000; % what lambda values to test for ridge regression
     % find lambda that gives best cross-validated fit
@@ -562,8 +566,13 @@ elseif regFlag == 2
     for nf = 1:cv.NumTestSets
         thisTrain = find(training(cv,nf));
         thisTest  = find(test(cv,nf));
-        thisY = nanzscore(Y(sum(trialIndicator==thisTrain',2)==1),1);
-        thisX = nanzscore(X(sum(trialIndicator==thisTrain',2)==1,:),1);
+        if params.model == "model5"
+            thisY = nanzscore(Y(thisTrain),1);
+            thisX = nanzscore(X(thisTrain,:),1);
+        else
+            thisY = nanzscore(Y(sum(trialIndicator==thisTrain',2)==1),1);
+            thisX = nanzscore(X(sum(trialIndicator==thisTrain',2)==1,:),1);
+        end
         [B,etc] = lasso(thisX,thisY,'NumLambda',1000);
         for nb = 1:size(B,2)
             yhat = nanzscore(X(sum(trialIndicator==thisTest',2)==1,:),1)*B(:,nb); % estimated data
