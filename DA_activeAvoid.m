@@ -522,7 +522,6 @@ group = [];
 if params.model == "model5" 
     group = aID;    
     cv = cvpartition(group,"KFold",5,"Stratify",true); % Create cross-validation partitions with stratification by animal or day (if concatenated)
-    trialIndicator = aID; % cross validation by data point rather than trial 
 else
     for na = 1:numel(IDs)
         trainTrials = unique(trialIndicator(aID==IDs(na)));
@@ -570,13 +569,18 @@ elseif regFlag == 2
             thisY = nanzscore(Y(thisTrain),1);
             thisX = nanzscore(X(thisTrain,:),1);
         else
-            thisY = nanzscore(Y(sum(trialIndicator==thisTrain',2)==1),1);
-            thisX = nanzscore(X(sum(trialIndicator==thisTrain',2)==1,:),1);
+            thisY = nanzscore(Y(trialIndicator==thisTrain),1);
+            thisX = nanzscore(X(trialIndicator==thisTrain,:),1);
         end
         [B,etc] = lasso(thisX,thisY,'NumLambda',1000);
         for nb = 1:size(B,2)
-            yhat = nanzscore(X(sum(trialIndicator==thisTest',2)==1,:),1)*B(:,nb); % estimated data
-            testY = nanzscore(Y(sum(trialIndicator==thisTest',2)==1,:),1);
+            if params.model == "model5"
+                yhat = nanzscore(X(thisTest,:),1)*B(:,nb); % estimated data
+                testY = nanzscore(Y(thisTest),1);
+            else
+                yhat = nanzscore(X(sum(trialIndicator==thisTest',2)==1,:),1)*B(:,nb); % estimated data
+                testY = nanzscore(Y(sum(trialIndicator==thisTest',2)==1,:),1);
+            end
             lamMSE(nb,nf) = mean(sum((testY-yhat).^2));
             allLam(nb,nf) = etc.Lambda(nb);
         end
