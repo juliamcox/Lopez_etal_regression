@@ -122,7 +122,7 @@ if speedFlag
         thisY = thisY(idx);
         thisX = thisX(idx,:);
         thisX = cat(2,thisX,thisSpeed(idx));
-        if params.model == "model4"
+        if params.model == "model4" || params.model == "model5"
             thisX = cat(2,thisX,thisAccel(idx));
         end
 

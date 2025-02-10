@@ -42,7 +42,7 @@ switch model
         params.timeForward  = [1.5;      1.5;        1.5;        5;          5;           5]; % time after the event in seconds
         params.sessIDs      = 1:7; % which sessions to fit
         params.speedFlag    = true; % include speed predictor
-    case 'model4' % includes speed
+    case {'model4';'model5'} % includes speed and acceleration
         % Fit parameters
         params.eventNames   = {'CueAvoid';'CueEscape';'Shock';'AvoidCross';'EscapeCross';'ITICross'}; % which events to include
         params.timeBack     = [2;       2;          .5;        1;            0;           2]; % time before the event in seconds
