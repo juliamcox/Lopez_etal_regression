@@ -61,11 +61,11 @@
 %%% (not just during events)
 model       = 'model5';
 params              = setUpParams(model);
-params.numShuff     = 50; 
+params.numShuff     = 10; 
 params.MEFlag       = false; 
 params.regFlag      = 2;
 
-plotFlag    = false; % plot?
+plotFlag    = true; % plot?
 fitFlag     = true; % fit model? 
 extractData = false; % reorganize data? 
 parFlag     = true; % use parfor for bootstrapping model2?
