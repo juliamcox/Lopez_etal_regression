@@ -53,6 +53,7 @@ if speedFlag
             yhat  = thisX*thisB; % estimated data
         end
         eval(sprintf('modelStats.corr.speed%s = corr(yhat,Y,''rows'',''complete'');',num2str(size(X,2)-counter)));
+        counter = counter+1;
     end
 end
 
