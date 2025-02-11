@@ -569,8 +569,8 @@ elseif regFlag == 2
             thisY = nanzscore(Y(thisTrain),1);
             thisX = nanzscore(X(thisTrain,:),1);
         else
-            thisY = nanzscore(Y(trialIndicator==thisTrain),1);
-            thisX = nanzscore(X(trialIndicator==thisTrain,:),1);
+            thisY = nanzscore(Y(sum(trialIndicator==thisTrain',2)==1),1);
+            thisX = nanzscore(X(sum(trialIndicator==thisTrain',2)==1,:),1);
         end
         [B,etc] = lasso(thisX,thisY,'NumLambda',1000);
         for nb = 1:size(B,2)
