@@ -193,7 +193,11 @@ if params.speedFlag
         g.FontSize = 7.5623;
         ylabel(sprintf('Correlation coefficient\n(full - reduced)'))
         xlabel('Day')
+        if speedEvents{ne} == "speed0"
+            title('Acceleration', 'FontSize',8.6426)
+        else
         title(speedEvents{ne}(1:end-1), 'FontSize',8.6426)
+        end
         legend(p,params.regions,'Box','off')
         exportgraphics(f,fullfile(saveLoc,sprintf('%s.pdf',fname)),'Append',true)
     end
