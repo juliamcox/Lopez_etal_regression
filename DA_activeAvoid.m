@@ -335,7 +335,7 @@ switch params.model
 
     %% Model 3: Fit regression by session, concatenating across animals (option for mixed effects if regFlag == 0), includes speed predictor
 
-    case {"model3";"model4";"model5"} 
+    case {"model3"} 
 
         for nr = 1:numel(params.regions)
             thisIDs = unique(recs.ID(contains(recs.Region,params.regions{nr})));

@@ -53,7 +53,6 @@ if speedFlag
             thisY     = dataTable.dff;
             thisSpeed = dataTable.Speed;
         end
-        thisAccel = cat(1,NaN,diff(thisSpeed)./(1/params.newFs));
         %%% Circularly shift data if necessary
         if shuffFlag
             thisY = circshift(thisY,randi(size(thisY,1)-params.Fs));
@@ -113,19 +112,14 @@ if speedFlag
             thisX = cat(2,thisX,x);
 
         end
-        if params.model == "model5"
-            idx = 1:size(thisX,1);
-        else
-            idx = unique(idx);
-            idx = round(idx);
-        end
+        
+        idx = unique(idx);
+        idx = round(idx);
+
         thisY = thisY(idx);
         thisX = thisX(idx,:);
         thisX = cat(2,thisX,thisSpeed(idx));
-        if params.model == "model4" || params.model == "model5"
-            thisX = cat(2,thisX,thisAccel(idx));
-        end
-
+      
 
         %%% Create trial inidicator
         temp = diff(idx);

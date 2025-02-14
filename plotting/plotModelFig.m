@@ -1,5 +1,7 @@
 function stats = plotModelFig(params)
 
+% Generate plots for figure 2 and S5  
+
 %% Load data     
 load(fullfile(params.fbasename,'plots',sprintf('%s_kernels_numShuff%s_Fs%s_ME%s_reg%s.mat',params.model,num2str(params.numShuff),num2str(params.newFs),num2str(params.MEFlag),num2str(params.regFlag))),'temporalKernels','shuffKernels');
 for nr = 1:numel(params.regions)
@@ -18,13 +20,17 @@ end
 
 %% Plot temporal kernels (A-B)
 CIFlag = true;
-sessIDs = [1,4,7]; % which sessions to plot kernels
+sessIDs = [1,3,7]; % which sessions to plot kernels
 plotKernels(temporalKernels,sessIDs,params.timeBack,params.timeForward,params.eventNames,params,saveLoc,fname,shuffKernels,CIFlag);
 
 %% Plot correlation coefficients for full model and comparison between full and events in eventNames (C-D)
 if params.numShuff > 0
     CIFlag = true;
-    stats = plotBootCorr(realStats,shuffStats,params,{'Shock';'ITICross'},CIFlag,saveLoc,fname);
+    if params.model=="model3"
+        stats = plotBootCorr(realStats,shuffStats,params,{'ITICross'},CIFlag,saveLoc,fname);
+    else
+        stats = plotBootCorr(realStats,shuffStats,params,{'Shock'},CIFlag,saveLoc,fname);
+    end
 end
 
 %% Plot area under the curve (E)

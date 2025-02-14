@@ -98,16 +98,7 @@ for ne = 1:numel(eventNames)
     eval(sprintf('stats.%s = P;',eventNames{ne}));
 
 
-    % % Compare Day 1 to the rest of the days
-    % for nr = 1:numel(params.regions)
-    %     for ns = 2:numel(params.sessIDs)
-    %         thisShuff = shuff{nr,1}-shuff{nr,ns};
-    %         CI = prctile(thisShuff,[100*al/2,100*(1-al/2)]);
-    %         H_day(nr,ns-1) =  CI(1)>0 | CI(2)<0;
-    %         P_day(nr,ns-1) = mean(thisShuff<=0)*2;
-    %         %figure(); histogram(thisShuff);
-    %     end
-    % end
+  
 
     f=figure('Units','inches','Position',[4.5729 2.8854 2.1357 1.6253]); hold on
     x = (1:numel(params.sessIDs))-.2;
@@ -193,11 +184,7 @@ if params.speedFlag
         g.FontSize = 7.5623;
         ylabel(sprintf('Correlation coefficient\n(full - reduced)'))
         xlabel('Day')
-        if speedEvents{ne} == "speed0"
-            title('Acceleration', 'FontSize',8.6426)
-        else
         title(speedEvents{ne}(1:end-1), 'FontSize',8.6426)
-        end
         legend(p,params.regions,'Box','off')
         exportgraphics(f,fullfile(saveLoc,sprintf('%s.pdf',fname)),'Append',true)
     end

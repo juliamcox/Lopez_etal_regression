@@ -9,13 +9,17 @@ function params = setUpParams(model)
 
 % Data location
 if ispc
-    params.fbasename = 'C:\Users\jmc0163\OneDrive - Northwestern University\Data\DA_Photometry_GLopez';
-    params.fbasename_raw = 'C:\Users\jmc0163\OneDrive - Northwestern University\GLopez_DataforRegressionAnalysis';
+    params.fbasename = []; % location of configured data
+    params.fbasename_raw = []; % location of raw data 
 elseif ismac
-    params.fbasename = '/Users/julia/Library/CloudStorage/OneDrive-NorthwesternUniversity/Data/DA_Photometry_GLopez';
-    params.fbasename_raw = '/Users/julia/Library/CloudStorage/OneDrive-NorthwesternUniversity/GLopez_DataforRegressionAnalysis';
+    params.fbasename = [];
+    params.fbasename_raw = [];
 else
-    params.fbasename = '/projects/p31438/DA_Photometry_GLopez/';
+    params.fbasename = [];
+end
+
+if isempty(params.fbasename)
+    error('Add pathnames to setUpParams.m')
 end
 
 % Regression parameters 
@@ -36,13 +40,6 @@ switch model
         params.sessIDs      = 1:7; % which sessions to fit
         params.speedFlag    = false;
     case 'model3' % includes speed
-        % Fit parameters
-        params.eventNames   = {'CueAvoid';'CueEscape';'Shock';'AvoidCross';'EscapeCross';'ITICross'}; % which events to include
-        params.timeBack     = [2;       2;          .5;        1;            0;           2]; % time before the event in seconds
-        params.timeForward  = [1.5;      1.5;        1.5;        5;          5;           5]; % time after the event in seconds
-        params.sessIDs      = 1:7; % which sessions to fit
-        params.speedFlag    = true; % include speed predictor
-    case {'model4';'model5'} % includes speed and acceleration
         % Fit parameters
         params.eventNames   = {'CueAvoid';'CueEscape';'Shock';'AvoidCross';'EscapeCross';'ITICross'}; % which events to include
         params.timeBack     = [2;       2;          .5;        1;            0;           2]; % time before the event in seconds
